@@ -13,7 +13,7 @@ git clone https://github.com/Chesterhuang1999/Tensor-FISTA-Net.git
 `
 ## Download the data 
 
-The training, testing and mask data can be download through Google Drive and Baidu Drive.
+The training, testing and mask data can be download through [Baidu Drive](https://pan.baidu.com/s/16TXyLvUNGXTyJBLKMkYsKQ).(Key:cbnm)
 
 ## Usage 
 
