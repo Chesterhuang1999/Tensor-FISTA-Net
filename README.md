@@ -46,5 +46,5 @@ python Reconstruction.py
 2. Open the directory 'maskData' and rename the mask for CASSI from 'mask_cassi.mat' to 'mask256.mat' 
 3. Test the model through 
 `
-python Test.py
+python Reconstruction.py
 `
