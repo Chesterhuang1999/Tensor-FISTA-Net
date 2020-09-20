@@ -1,7 +1,7 @@
 #            Build Model
-#           Xiaochen  Han
-#            Apr 26 2019
-#    guillermo_han97@sjtu.edu.cn
+#       Xiaochen  Han & Qifan Huang
+#            Sept 20 2020
+#       hqf17@mails.tsinghua.edu.cn
 #
 
 import tensorflow.compat.v1 as tf
