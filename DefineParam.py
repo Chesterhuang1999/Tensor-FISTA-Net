@@ -1,7 +1,7 @@
 #          Define all param
-#           Xiaochen  Han
-#            May 21 2019
-#    guillermo_han97@sjtu.edu.cn
+#          Xiaochen  Han & Qifan Huang
+#          Sept 20 2020
+#          hqf17@mails.tsinghua.edu.cn
 #
 
 # define all param
