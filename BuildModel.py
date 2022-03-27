@@ -6,6 +6,7 @@
 
 import tensorflow.compat.v1 as tf
 import numpy as np
+import math
 import LoadData as LD
 import DefineParam as DP
 
@@ -29,6 +30,7 @@ def build_model(phi, restore=False):
     init = tf.global_variables_initializer()
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
+    config.graph_options.optimizer_options.global_jit_level = tf.OptimizerOptions.ON_1
     saver = tf.train.Saver(tf.global_variables(), max_to_keep=100)
     sess = tf.Session(config=config)
 
@@ -48,9 +50,12 @@ def get_filter(wShape, nOrder):
     return weight
 
 
-def build_one_phase(layerxk, layerzk, Phi, PhiT, Yinput):
+def build_one_phase(layerxk, layerzk, Phi, PhiT, Yinput, phase, lambdavalue):
     # params
-    lambdaStep = tf.Variable(0.1, dtype=tf.float32)
+    lambdaStep = tf.Variable(lambdavalue, dtype=tf.float32)
+    eta = 0.95
+    xi = 0.95
+
     softThr = tf.Variable(0.1, dtype=tf.float32)
     t = tf.Variable(1, dtype=tf.float32)
     convSize1 = 64
@@ -89,17 +94,22 @@ def build_one_phase(layerxk, layerzk, Phi, PhiT, Yinput):
     FFrk = tf.nn.relu(FFrk)
     FFrk = tf.nn.conv2d(FFrk, weight14, strides=[1, 1, 1, 1], padding='SAME')
     FFrk = tf.nn.conv2d(FFrk, weight6, strides=[1, 1, 1, 1], padding='SAME')
-
     # xk = rk + ~F(soft(F(rk), softThr))
     xk = tf.add(rk, FFrk)
+    print(t)
     zk = t*xk + (1 - t)*layerxk[-1]
-
+    if(phase >= 1):
+        delta0 = eta * tf.norm(layerxk[-1] - layerxk[-2])
+        delta1 = tf.norm(xk - layerxk[-1])
+        larger = tf.math.less(delta0, delta1)
+        if (larger == "True"):
+            lambdavalue = xi * lambdavalue
     # Symmetric constraint
     sFFrk = tf.nn.conv2d(Frk, weight13, strides=[1, 1, 1, 1], padding='SAME')
     sFFrk = tf.nn.relu(sFFrk)
     sFFrk = tf.nn.conv2d(sFFrk, weight14, strides=[1, 1, 1, 1], padding='SAME')
     symmetric = sFFrk - tmp
-    return xk, zk, symmetric, Frk
+    return xk, zk, symmetric, Frk, lambdavalue
 
 
 # compute fista once (one epoch)
@@ -110,15 +120,17 @@ def build_fista(Xinput, Phi, PhiT, Yinput, reuse):
     transField = []                                   # store data after transform in each phase, used in sparsity constraint
     layerxk.append(Xinput)                            # x0 = x0, initialization
     layerzk.append(Xinput)                            # z0 = x0, initialization
+    lambdavalue = 0.11
 
     # build each phase
     for i in range(nPhase):
         with tf.variable_scope('conv_%d' % (i), reuse=reuse):
-            xk, zk, convSymmetric, field = build_one_phase(layerxk, layerzk, Phi, PhiT, Yinput)
+            xk, zk, convSymmetric, field, lambdaupdate = build_one_phase(layerxk, layerzk, Phi, PhiT, Yinput, i, lambdavalue)
             layerxk.append(xk)
             layerzk.append(zk)
             layerSymmetric.append(convSymmetric)
             transField.append(field)
+            lambdavalue = lambdaupdate
     return layerxk, layerSymmetric, transField
 
 

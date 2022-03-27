@@ -12,8 +12,7 @@ import math
 import LoadData as LD
 import DefineParam as DP
 import os
-from skimage.measure import compare_ssim
-from skimage.measure import compare_psnr
+from skimage import metrics 
 
 # get param
 pixel, batchSize, nPhase, nTrainData, trainScale, learningRate, nEpoch, nFrame, ncpkt, trainFile, testFile, maskFile, saveDir, modelDir, name = DP.get_param()
@@ -44,16 +43,16 @@ def reconstruct_image(sess, Yinput, prediction, Xinput, Xoutput, testLabel, test
     recInfo = "Rec avg PSNR %.4f time= %.2fs\n" % (PSNR, (end - start))
     print(recInfo)
     # calculate ssim
-    SSIM = compare_ssim(xoutput, rec)
+    SSIM = metrics.structural_similarity(xoutput, rec, win_size = 3)
     recInfo1 = "Rec avg SSIM %.4f time= %.2fs\n" % (SSIM, (end - start))
     print(recInfo1)
     # output reconstruction image
-    for i in range(10):
+    for i in range(3):
         meanpsnr = 0.00
         meanssim = 0.00
         for j in range(nFrame):
             PSNR = psnr(rec[i, :, :, j], xoutput[i, :, :, j])
-            ssim = compare_ssim(rec[i,:,:,j],xoutput[i,:,:,j])
+            ssim = metrics.structural_similarity(rec[i,:,:,j],xoutput[i,:,:,j], win_size = 3)
             print("Frame %d %d, PSNR: %.2f" % (i, j, PSNR))
             meanpsnr += PSNR
             meanssim += ssim
